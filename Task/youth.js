@@ -1,8 +1,7 @@
 /*
-更新时间: 2020-09-25 18:15
+更新时间: 2020-11-26 10:00
 赞赏:中青邀请码`46308484`,农妇山泉 -> 有点咸，万分感谢
 本脚本仅适用于中青看点极速版领取青豆
-
 获取Cookie方法:
 1.将下方[rewrite_local]和[MITM]地址复制的相应的区域
 下，运行时间自行配置
@@ -15,26 +14,19 @@
 4.非专业人士制作，欢迎各位大佬提出宝贵意见和指导
 5.增加每日打卡，打卡时间每日5:00-8:00❗️，请不要忘记设置运行时间，共4条Cookie，请全部获取，获取请注释
 6. 支持Github Actions多账号运行，填写'YOUTH_HEADER'值多账号时用'#'号隔开，其余值均用'&'分割  ‼️，当转盘次数为50或者100并且余额大于10元时推送通知
-
 ~~~~~~~~~~~~~~~~
 Surge 4.0 :
 [Script]
 中青看点 = type=cron,cronexp=35 5 0 * * *,script-path=https://raw.githubusercontent.com/Sunert/Scripts/master/Task/youth.js,script-update-interval=0
-
 中青看点 = type=http-request,pattern=https:\/\/\w+\.youth\.cn\/TaskCenter\/(sign|getSign),script-path=https://raw.githubusercontent.com/Sunert/Scripts/master/Task/youth.js
-
 中青看点 = type=http-request,pattern=https:\/\/ios\.baertt\.com\/v5\/article\/complete,script-path=https://raw.githubusercontent.com/Sunert/Scripts/master/Task/youth.js, requires-body=true
-
 中青看点 = type=http-request,pattern=https:\/\/ios\.baertt\.com\/v5\/article\/red_packet,script-path=https://raw.githubusercontent.com/Sunert/Scripts/master/Task/youth.js, requires-body=true
-
 中青看点 = type=http-request,pattern=https:\/\/ios\.baertt\.com\/v5\/user\/app_stay\.json,script-path=https://raw.githubusercontent.com/Sunert/Scripts/master/Task/youth.js, requires-body=true
-
 ~~~~~~~~~~~~~~~~
 Loon 2.1.0+
 [Script]
 # 本地脚本
 cron "04 00 * * *" script-path=https://raw.githubusercontent.com/Sunert/Scripts/master/Task/youth.js, enabled=true, tag=中青看点
-
 http-request https:\/\/\w+\.youth\.cn\/TaskCenter\/(sign|getSign) script-path=https://raw.githubusercontent.com/Sunert/Scripts/master/Task/youth.js
 http-request https:\/\/ios\.baertt\.com\/v5\/article\/complete script-path=https://raw.githubusercontent.com/Sunert/Scripts/master/Task/youth.js, requires-body=true
 http-request https:\/\/ios\.baertt\.com\/v5\/article\/red_packet script-path=https://raw.githubusercontent.com/Sunert/Scripts/master/Task/youth.js, requires-body=true
@@ -43,22 +35,15 @@ http-request https:\/\/ios\.baertt\.com\/v5\/user\/app_stay\.json script-path=ht
 QX 1.0. 7+ :
 [task_local]
 0 9 * * * youth.js
-
 [rewrite_local]
 https:\/\/\w+\.youth\.cn\/TaskCenter\/(sign|getSign) url script-request-header youth.js
-
 https?:\/\/ios\.baertt\.com\/v5\/article\/complete url script-request-body youth.js
-
 https:\/\/ios\.baertt\.com\/v5\/article\/red_packet url script-request-body youth.js
-
 https:\/\/ios\.baertt\.com\/v5\/user\/app_stay\.json url script-request-body youth.js
-
-
 ~~~~~~~~~~~~~~~~
 [MITM]
 hostname = *.youth.cn, ios.baertt.com 
 ~~~~~~~~~~~~~~~~
-
 */
 
 let s = 200 //各数据接口延迟
@@ -156,7 +141,7 @@ if (isGetCookie = typeof $request !== 'undefined') {
     }
   await sign();
   await signInfo();
-  await Invitant();
+  await friendsign();
 if($.time('HH')>12){
   await punchCard()
 };
@@ -433,7 +418,7 @@ function boxshare() {
     })
 }
 
-function Invitant() {      
+function Invitant2() {      
  return new Promise((resolve, reject) => {
    $.post({ url: `${YOUTH_HOST}User/fillCode`,headers: JSON.parse(signheaderVal),body: `{"code": "46746961"}`
 }, (error, response, data) =>
@@ -443,6 +428,45 @@ function Invitant() {
   resolve()
  })
 }
+function friendsign(uid) {
+    return new Promise((resolve, reject) => {
+        const url = {
+            url: `https://kd.youth.cn/WebApi/ShareSignNew/getFriendActiveList`,
+            headers: JSON.parse(signheaderVal)
+        }
+        $.get(url, async(error, response, data) => {
+            let addsign = JSON.parse(data)
+            if (addsign.error_code == "0"&& addsign.data.active_list.length>0) {
+             friendsitem = addsign.data.active_list
+             for(friends of friendsitem){
+            if(friends.button==1){
+               await friendSign(friends.uid)
+              }
+             }
+            }
+           resolve()
+        })
+    })
+}
+
+
+function friendSign(uid) {
+    return new Promise((resolve, reject) => {
+        const url = {
+            url: `https://kd.youth.cn/WebApi/ShareSignNew/sendScoreV2?friend_uid=${uid}`,
+            headers: JSON.parse(signheaderVal)
+        }
+        $.get(url, (error, response, data) => {
+            friendres = JSON.parse(data)
+            if (friendres.error_code == "0") {
+                //detail += `【好友红包】+${friendres.score}个青豆\n`
+               console.log(`好友签到，我得红包 +${friendres.score}个青豆`)
+            }
+            resolve()
+        })
+    })
+}
+
 
 //看视频奖励
 function getAdVideo() {
